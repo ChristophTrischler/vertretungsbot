@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: vertretungsdings
+
+  bot: 
+    build: . 
+    restart: always
+    command: ["./target/release/test-sendfiles"] 
+
+  adminer: 
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080

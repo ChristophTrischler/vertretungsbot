@@ -10,7 +10,6 @@ services:
 
   bot: 
     build: . 
-    restart: always
     command: ["./target/release/test-sendfiles"] 
 
   adminer: 

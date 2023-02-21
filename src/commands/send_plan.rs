@@ -153,48 +153,49 @@ pub async fn check_loop(arc_ctx: Arc<Context>){
                 break;
             }
         }
-        send_vdays2users(Arc::clone(&arc_ctx), &vdays).await;
-        tokio::time::sleep(min15).await;
-    }
-
-}
 
 
-async fn send_vdays2users(arc_ctx: Arc<Context>, vdays: &Vec<VDay>){
-    let ctx: &Context = arc_ctx.as_ref();
-    let connection = {
-        let data_read = ctx.data.read().await;
-        data_read.get::<DBConnection>().unwrap().clone()
-    };
+        if !vdays.is_empty(){
+            let ctx: &Context = arc_ctx.as_ref();
+            let connection = {
+                let data_read = ctx.data.read().await;
+                data_read.get::<DBConnection>().unwrap().clone()
+            };
 
-    let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new(
-        format!(
-            "SELECT \"discord_id\", \"data\" FROM \"user\" WHERE \"active\" = true",
-        )
-    );
-    let query = query_builder.build(); 
-    let rows = query.fetch_all(connection.as_ref())
-    .await
-    .unwrap();
+            let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new(
+                format!(
+                    "SELECT \"discord_id\", \"data\" FROM \"user\" WHERE \"active\" = true",
+                )
+            );
+            let query = query_builder.build(); 
+            let rows = query.fetch_all(connection.as_ref())
+            .await
+            .unwrap();
 
-    for row in rows {
-        let id: i64 = row.try_get(0).unwrap();
-        let data = row.try_get(1).unwrap();
+            for row in rows {
+                let id: i64 = row.try_get(0).unwrap();
+                let data = row.try_get(1).unwrap();
 
-        let user = UserId(id as u64)
-        .to_user(ctx)
-        .await
-        .unwrap();
-        
-        let plan: Plan = serde_json::from_str(data).unwrap();
+                let user = UserId(id as u64)
+                .to_user(ctx)
+                .await
+                .unwrap();
+                
+                let plan: Plan = serde_json::from_str(data).unwrap();
 
-        for vday in vdays {
-            let text = get_day(vday, &plan).to_string();
+                for vday in &vdays {
+                    let text = get_day(vday, &plan).to_string();
 
-            if let Err(why) = user.direct_message(ctx, |m| m.content(&text)).await {
-                error!("Error sending dm: {:?}", why);
+                    if let Err(why) = user.direct_message(ctx, |m| m.content(&text)).await {
+                        error!("Error sending dm: {:?}", why);
+                    }
+                }
             }
         }
+        
+        info!("cheked for updates");
+
+        tokio::time::sleep(min15).await;
     }
 
 }

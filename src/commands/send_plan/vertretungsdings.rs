@@ -245,8 +245,7 @@ impl Day {
 
     pub fn to_table(&self) -> Table{
         let mut table = Table::new();
-        table.set_titles(row![H6->self.day]);
-        table.add_row(row!["Stunde","Fach", "Raum","Lehrer","Type","Mitteilung"]);
+        table.set_titles(row!["Stunde","Fach", "Raum","Lehrer","Type","Mitteilung"]);
         self.lessons.iter()
         .filter(|item| item.len()>0)
         .for_each(|lesson| 
@@ -258,7 +257,7 @@ impl Day {
     }
 
     pub fn to_string(&self) -> String{
-        format!{"```{}```", self.to_table().to_string()}
+        format!{"```{}\n{}```",self.day, self.to_table().to_string()}
     }
 }
 

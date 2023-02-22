@@ -17,8 +17,6 @@ mod vertretungsdings;
 
 use crate::DBConnection;
 
-use self::vertretungsdings::VDay;
-
 
 #[command]
 pub async fn send_plan(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult{

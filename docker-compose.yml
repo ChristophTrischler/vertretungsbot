@@ -9,8 +9,9 @@ services:
       POSTGRES_DB: vertretungsdings
 
   bot: 
-    build: . 
-    command: ["./target/release/test-sendfiles"] 
+    working_dir: /vertretungsbot
+    build: 
+      dockerfile: Dockerfile
 
   adminer: 
     image: adminer

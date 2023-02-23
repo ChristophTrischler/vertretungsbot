@@ -9,7 +9,7 @@ use serenity::model::prelude::*;
 use serenity::prelude::*;
 use tracing::{error, info};
 use reqwest::Client;
-use sqlx::{QueryBuilder, Postgres, Row};
+use sqlx::{QueryBuilder, Postgres, Row, Execute};
 
 use crate::commands::send_plan::vertretungsdings::{Plan, get_v_text, get_day, check_change};
 
@@ -52,22 +52,13 @@ pub async fn send_plan(ctx: &Context, msg: &Message, mut _args: Args) -> Command
 
     let plan_str = serde_json::to_string(&plan).unwrap();
 
-    
-    let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new(
-        format!(
-            "INSERT INTO \"user\" VALUES ({},{},'{}')
-            ON CONFLICT (discord_id) DO UPDATE SET \"data\" = EXCLUDED.data",
-            id,
-            true,
-            plan_str
-        )
-    );
-
-    let query = query_builder.build();
-    query.execute(connection.as_ref()).await.expect("faild query");
-
-
-    
+    sqlx::query("INSERT INTO \"user\" VALUES ($1,$2,$3) 
+        ON CONFLICT (discord_id) DO UPDATE SET \"data\" = EXCLUDED.data")
+        .bind(id)
+        .bind(true)
+        .bind(plan_str)
+        .execute(connection.as_ref())
+        .await?;
 
     Ok(())
 }
@@ -82,10 +73,10 @@ pub async fn update(ctx: &Context, msg: &Message, mut _args: Args) -> CommandRes
         data_read.get::<DBConnection>().unwrap().clone()
     };
 
-    let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new(
-        format!("SELECT \"data\" FROM \"user\" WHERE \"discord_id\" = {}",id)
-    );
-    let query = query_builder.build();
+   
+    let query = 
+    sqlx::query("SELECT \"data\" FROM \"user\" WHERE \"discord_id\" = $1")
+    .bind(id);
     let row = query.fetch_one(connection.as_ref()).await.expect("faild query");
     
     let data: String = row.try_get(0).unwrap();
@@ -118,11 +109,11 @@ pub async fn set(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult{
         data_read.get::<DBConnection>().unwrap().clone()
     };
 
-    let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new(
-        format!("UPDATE \"user\" SET \"active\" = {status} WHERE \"discord_id\" = {id}")
-    );
-    let query = query_builder.build();
-    query.execute(connection.as_ref()).await?;
+    sqlx::query("UPDATE \"user\" SET \"active\"=$1 WHERE \"discord_id\"=$2")
+    .bind(status)   
+    .bind(id)
+    .execute(connection.as_ref())
+    .await?;
 
     Ok(())
 }
@@ -160,12 +151,7 @@ pub async fn check_loop(arc_ctx: Arc<Context>){
                 data_read.get::<DBConnection>().unwrap().clone()
             };
 
-            let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new(
-                format!(
-                    "SELECT \"discord_id\", \"data\" FROM \"user\" WHERE \"active\" = true",
-                )
-            );
-            let query = query_builder.build(); 
+            let query = sqlx::query("SELECT \"discord_id\", \"data\" FROM \"user\" WHERE \"active\" = true"); 
             let rows = query.fetch_all(connection.as_ref())
             .await
             .unwrap();

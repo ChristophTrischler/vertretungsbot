@@ -1,12 +1,7 @@
 
 use reqwest::{Client};
 use scraper::{Html, Selector};
-use serde_json::Value;
 use serenity::builder::{CreateMessage, CreateEmbed};
-use serenity::{model::prelude::Embed};
-use serenity::model::Timestamp;
-use serenity::model::channel::Message;
-use tracing_subscriber::fmt::format;
 use std::env;
 use serde::{Deserialize, Serialize};
 use chrono::naive::NaiveDate;

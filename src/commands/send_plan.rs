@@ -180,7 +180,7 @@ pub async fn check_loop(arc_ctx: Arc<Context>){
 
             for row in rows {
                 let id: i64 = row.try_get(0).unwrap();
-                let embedOption: bool = row.try_get(1).unwrap();
+                let embed_activated: bool = row.try_get(1).unwrap();
                 let data = row.try_get(2).unwrap();
 
                 let user = UserId(id as u64)
@@ -192,10 +192,9 @@ pub async fn check_loop(arc_ctx: Arc<Context>){
 
                 for vday in &vdays {
                     let day = get_day(vday, &plan);
-            
 
                     if let Err(why) = user.direct_message(ctx, |m| {
-                        if embedOption {
+                        if embed_activated {
                             day.to_embed(m);
                             m
                         }

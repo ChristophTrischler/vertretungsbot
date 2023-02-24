@@ -218,11 +218,11 @@ impl Lesson {
     fn to_embed(&self, e: &mut CreateEmbed){
         e.title(format!("{}.",self.time))
         .fields(vec![
-            (&self.subject,"",false),
-            (&self.room,"",false),
-            (&self.teacher,"",false),
-            (&self.vtype,"",false),
-            (&self.message,"",false)
+            ("Fach",&self.subject,false),
+            ("Raum",&self.room,false),
+            ("Lehrer", &self.teacher,false),
+            ("Art", &self.vtype,false),
+            ("Mitteilung", &self.message,false)
         ]);
     }
 

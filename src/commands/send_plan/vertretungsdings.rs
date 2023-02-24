@@ -1,6 +1,12 @@
 
 use reqwest::{Client};
 use scraper::{Html, Selector};
+use serde_json::Value;
+use serenity::builder::{CreateMessage, CreateEmbed};
+use serenity::{model::prelude::Embed};
+use serenity::model::Timestamp;
+use serenity::model::channel::Message;
+use tracing_subscriber::fmt::format;
 use std::env;
 use serde::{Deserialize, Serialize};
 use chrono::naive::NaiveDate;
@@ -203,7 +209,7 @@ pub struct Lesson {
 }
 
 impl Lesson {
-    pub fn new(time: i64, subject: &str, room: &str, teacher: &str)->Lesson{
+    fn new(time: i64, subject: &str, room: &str, teacher: &str)->Lesson{
         Lesson { 
             class: String::new(), 
             time: time, 
@@ -214,12 +220,22 @@ impl Lesson {
             message: String::new() 
         }
     }
+    fn to_embed(&self, e: &mut CreateEmbed){
+        e.title(format!("{}.",self.time))
+        .fields(vec![
+            (&self.subject,"",false),
+            (&self.room,"",false),
+            (&self.teacher,"",false),
+            (&self.vtype,"",false),
+            (&self.message,"",false)
+        ]);
+    }
 
-    pub fn to_row(&self) -> Row{
+    fn to_row(&self) -> Row{
         row![self.time.to_string(),self.subject,self.room,self.teacher,self.vtype,self.message]
     }
 
-    pub fn to_vec(&self) -> Vec<String>{
+    fn to_vec(&self) -> Vec<String>{
         vec![self.class.to_string(), self.time.to_string(), self.subject.to_string(), 
         self.room.to_string(), self.teacher.to_string(), self.vtype.to_string(), self.message.to_string()]
     }
@@ -254,6 +270,20 @@ impl Day {
             }
         );
         table
+    }
+
+    pub fn to_embed(&self, m: &mut CreateMessage){
+        m.content(&self.day);
+        self.lessons.iter()
+        .filter(|item| item.len()>0)
+        .for_each(|lesson| 
+            for l in lesson{
+                m.add_embed(|e| {
+                    l.to_embed(e);
+                    e
+                });
+            }
+        );
     }
 
     pub fn to_string(&self) -> String{

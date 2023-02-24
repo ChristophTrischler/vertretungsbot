@@ -49,7 +49,7 @@ impl EventHandler for Handler {
 }
 
 #[group]
-#[commands(send_plan, update, set)]
+#[commands(send_plan, update, set, embed)]
 struct General;
 
 

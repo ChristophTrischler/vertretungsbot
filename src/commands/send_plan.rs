@@ -9,7 +9,7 @@ use serenity::model::prelude::*;
 use serenity::prelude::*;
 use tracing::{error, info};
 use reqwest::Client;
-use sqlx::{QueryBuilder, Postgres, Row, Execute};
+use sqlx::{Row};
 
 use crate::commands::send_plan::vertretungsdings::{Plan, get_v_text, get_day, check_change};
 
@@ -52,10 +52,11 @@ pub async fn send_plan(ctx: &Context, msg: &Message, mut _args: Args) -> Command
 
     let plan_str = serde_json::to_string(&plan).unwrap();
 
-    sqlx::query("INSERT INTO \"user\" VALUES ($1,$2,$3) 
+    sqlx::query("INSERT INTO \"user\" VALUES ($1,$2,$3,$4) 
         ON CONFLICT (discord_id) DO UPDATE SET \"data\" = EXCLUDED.data")
         .bind(id)
         .bind(true)
+        .bind(false)
         .bind(plan_str)
         .execute(connection.as_ref())
         .await?;
@@ -93,7 +94,6 @@ pub async fn update(ctx: &Context, msg: &Message, mut _args: Args) -> CommandRes
             break;
         }
     }
-
     Ok(())
 }
 
@@ -124,6 +124,26 @@ async fn send_file_error(ctx: &Context, msg: &Message){
     }
 }
 
+#[command]
+pub async fn embed(ctx: &Context, msg: &Message, mut args: Args)->CommandResult{
+    let id = msg.author.id.0 as i64;
+    info!("{} used !activate", id);
+    let arg = args.single::<bool>()?;
+
+    let connection = {
+        let data_read = ctx.data.read().await;
+        data_read.get::<DBConnection>().unwrap().clone()
+    };
+
+    sqlx::query("UPDATE \"user\" SET \"embed\"=$1 WHERE \"discord_id\"=$2")
+    .bind(arg)
+    .bind(id)
+    .execute(connection.as_ref())
+    .await?;
+
+    Ok(())
+}
+
 
 pub async fn check_loop(arc_ctx: Arc<Context>){
     let min15 = Duration::from_secs(900);
@@ -151,14 +171,17 @@ pub async fn check_loop(arc_ctx: Arc<Context>){
                 data_read.get::<DBConnection>().unwrap().clone()
             };
 
-            let query = sqlx::query("SELECT \"discord_id\", \"data\" FROM \"user\" WHERE \"active\" = true"); 
+            let query = sqlx::query(
+                "SELECT \"discord_id\", \"embed\", \"data\" FROM \"user\" WHERE \"active\" = true"
+            ); 
             let rows = query.fetch_all(connection.as_ref())
             .await
             .unwrap();
 
             for row in rows {
                 let id: i64 = row.try_get(0).unwrap();
-                let data = row.try_get(1).unwrap();
+                let embedOption: bool = row.try_get(1).unwrap();
+                let data = row.try_get(2).unwrap();
 
                 let user = UserId(id as u64)
                 .to_user(ctx)
@@ -168,9 +191,18 @@ pub async fn check_loop(arc_ctx: Arc<Context>){
                 let plan: Plan = serde_json::from_str(data).unwrap();
 
                 for vday in &vdays {
-                    let text = get_day(vday, &plan).to_string();
+                    let day = get_day(vday, &plan);
+            
 
-                    if let Err(why) = user.direct_message(ctx, |m| m.content(&text)).await {
+                    if let Err(why) = user.direct_message(ctx, |m| {
+                        if embedOption {
+                            day.to_embed(m);
+                            m
+                        }
+                        else {
+                            m.content(day.to_string())
+                        }
+                    }).await {
                         error!("Error sending dm: {:?}", why);
                     }
                 }

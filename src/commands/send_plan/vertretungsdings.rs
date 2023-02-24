@@ -216,14 +216,16 @@ impl Lesson {
         }
     }
     fn to_embed(&self, e: &mut CreateEmbed){
-        e.title(format!("{}.",self.time))
-        .fields(vec![
+        let fields = vec![
             ("Fach",&self.subject,false),
             ("Raum",&self.room,false),
             ("Lehrer", &self.teacher,false),
             ("Art", &self.vtype,false),
             ("Mitteilung", &self.message,false)
-        ]);
+        ].into_iter().filter(|i|i.1.len()>0);
+
+        e.title(format!("{}.",self.time))
+        .fields(fields);
     }
 
     fn to_row(&self) -> Row{

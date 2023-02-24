@@ -150,7 +150,7 @@ pub async fn check_loop(arc_ctx: Arc<Context>){
     let mut times = HashMap::new();
     loop {
         let mut vdays = Vec::new();
-        for i in 1..=3{
+        for i in 1..=10{
             let last = {
                 times.try_insert(i, String::new()).ok();
                 times.get_mut(&i).unwrap() 
@@ -191,7 +191,7 @@ pub async fn check_loop(arc_ctx: Arc<Context>){
                 let plan: Plan = serde_json::from_str(data).unwrap();
 
                 for vday in &vdays {
-                    let day = get_day(vday, &plan);
+                    let day = get_day(vday, &plan); 
 
                     if let Err(why) = user.direct_message(ctx, |m| {
                         if embed_activated {

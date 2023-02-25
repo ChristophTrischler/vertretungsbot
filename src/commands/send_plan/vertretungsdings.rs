@@ -191,7 +191,7 @@ pub enum WeekOption {
     AorB(PlanLesson, PlanLesson),
 }
 
-
+ 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Lesson {
     pub class: String,
@@ -215,7 +215,7 @@ impl Lesson {
             message: String::new() 
         }
     }
-    fn to_embed(&self, e: &mut CreateEmbed){
+    fn to_embed(&self)->CreateEmbed{
         let fields = vec![
             ("Fach",&self.subject,false),
             ("Raum",&self.room,false),
@@ -224,8 +224,10 @@ impl Lesson {
             ("Mitteilung", &self.message,false)
         ].into_iter().filter(|i|i.1.len()>0);
 
+        let mut e = CreateEmbed::default();
         e.title(format!("{}.",self.time))
         .fields(fields);
+        e
     }
 
     fn to_row(&self) -> Row{
@@ -270,17 +272,12 @@ impl Day {
     }
 
     pub fn to_embed(&self, m: &mut CreateMessage){
-        m.content(&self.day);
-        self.lessons.iter()
-        .filter(|item| item.len()>0)
-        .for_each(|lesson| 
-            for l in lesson{
-                m.add_embed(|e| {
-                    l.to_embed(e);
-                    e
-                });
-            }
-        );
+        let embeds: Vec<CreateEmbed> = self.lessons.iter()
+        .map(|ls|ls.iter().map(|l| l.to_embed()))
+        .flatten()
+        .collect();
+        m.content(&self.day)
+        .set_embeds(embeds);
     }
 
     pub fn to_string(&self) -> String{

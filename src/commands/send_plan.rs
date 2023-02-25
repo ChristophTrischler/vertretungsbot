@@ -2,6 +2,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use std::collections::HashMap;
 
+use serenity::builder::CreateMessage;
 use  serenity::model::id::UserId;
 use serenity::framework::standard::macros::command;
 use serenity::framework::standard::{Args, CommandResult};
@@ -76,18 +77,28 @@ pub async fn update(ctx: &Context, msg: &Message, mut _args: Args) -> CommandRes
 
    
     let query = 
-    sqlx::query("SELECT \"data\" FROM \"user\" WHERE \"discord_id\" = $1")
+    sqlx::query("SELECT \"embed\", \"data\" FROM \"user\" WHERE \"discord_id\" = $1")
     .bind(id);
     let row = query.fetch_one(connection.as_ref()).await.expect("faild query");
     
-    let data: String = row.try_get(0).unwrap();
+    let embed_activated: bool = row.try_get(0).unwrap();
+    let data: String = row.try_get(1).unwrap();
     let plan: Plan = serde_json::from_str(&data).unwrap();
 
     for i in 1..=3{
         if let Some(vday) =  get_v_text(i).await{
-            let text = get_day(&vday, &plan).to_string();
-            if let Err(why) = msg.channel_id.say(&ctx.http, &text).await {
-                error!("Error sending message: {:?}", why);
+            let day = get_day(&vday, &plan);
+            
+            if let Err(why) = msg.channel_id.send_message(ctx, |m| {
+                if embed_activated {
+                    day.to_embed(m);
+                    m
+                }
+                else {
+                    m.content(day.to_string())
+                }
+            }).await {
+                error!("Error sending Message: {:?}", why);
             }
         }
         else {
@@ -150,7 +161,7 @@ pub async fn check_loop(arc_ctx: Arc<Context>){
     let mut times = HashMap::new();
     loop {
         let mut vdays = Vec::new();
-        for i in 1..=10{
+        for i in 1..=3{
             let last = {
                 times.try_insert(i, String::new()).ok();
                 times.get_mut(&i).unwrap() 
@@ -193,7 +204,9 @@ pub async fn check_loop(arc_ctx: Arc<Context>){
                 for vday in &vdays {
                     let day = get_day(vday, &plan); 
 
-                    if let Err(why) = user.direct_message(ctx, |m| {
+                    
+
+                    if let Err(why) = user.direct_message(ctx,|m|{
                         if embed_activated {
                             day.to_embed(m);
                             m

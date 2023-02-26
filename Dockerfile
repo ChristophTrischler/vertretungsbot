@@ -1,4 +1,4 @@
-FROM lukemathwalker/cargo-chef:latest-rust-latest AS chef
+FROM --platform=linux/amd64 lukemathwalker/cargo-chef:latest-rust-latest AS chef
 WORKDIR /vertretungsbot
 
 FROM chef AS planner

@@ -1,6 +1,7 @@
 version: '3'
 services:
   db:
+    platform: linux/amd64
     image: postgres
     restart: always
     ports:
@@ -9,12 +10,14 @@ services:
       POSTGRES_PASSWORD: pass
       POSTGRES_DB: vertretungsdings
 
-  bot: 
+  bot:
+    platform: linux/amd64
     working_dir: /vertretungsbot
     build: 
       dockerfile: Dockerfile
 
-  adminer: 
+  adminer:
+    platform: linux/amd64 
     image: adminer
     restart: always
     ports:

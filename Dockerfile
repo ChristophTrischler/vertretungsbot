@@ -22,4 +22,4 @@ RUN apt-get update && \
     apt-get clean && \
     update-ca-certificates
 COPY --from=builder /vertretungsbot/target/release/vertretungsbot /usr/bin/
-CMD [ "vertretungsbot" ] 
+CMD [ "/usr/bin/vertretungsbot" ] 

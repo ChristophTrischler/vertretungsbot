@@ -55,7 +55,7 @@ struct General;
 
 #[tokio::main]
 async fn main() {
-    dotenv::dotenv().expect("Failed to load .env file");
+    dotenv::dotenv().ok();
 
     tracing_subscriber::fmt::init();
 

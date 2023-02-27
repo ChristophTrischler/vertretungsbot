@@ -14,10 +14,10 @@ services:
 
 
   bot:
+    image: christophtrischler/vertretungsbot
     working_dir: /vertretungsbot
-    build: 
-      context: .
-      dockerfile: Dockerfile
+    env_file:
+      - .env
 
   adminer:
     image: adminer

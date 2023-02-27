@@ -9,6 +9,7 @@ services:
       POSTGRES_PASSWORD: pass
       POSTGRES_DB: vertretungsdings
     volumes: 
+      - ./postgres-data:/var/lib/postgresql/data
       - ./sql/create_tables.sql:/docker-entrypoint-initdb.d/create_tables.sql
 
 

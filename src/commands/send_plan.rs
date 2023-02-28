@@ -161,10 +161,13 @@ pub async fn check_loop(arc_ctx: Arc<Context>){
     loop {
         let mut vdays = Vec::new();
         for i in 1..=3{
-            let last = {
-                times.try_insert(i, String::new()).ok();
+            let last = if let Some(s) = times.get_mut(&i) {
+                s
+            } else {
+                times.insert(i, String::new());
                 times.get_mut(&i).unwrap() 
             };
+
             if let Some(vday) =  check_change(i, last).await{
                vdays.push(vday);
             }

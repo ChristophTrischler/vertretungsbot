@@ -7,7 +7,6 @@ RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef AS builder 
 COPY --from=planner /vertretungsbot/recipe.json recipe.json
-RUN rustup update nightly; rustup default nightly;
 RUN cargo chef cook --release --recipe-path recipe.json
 COPY . .
 RUN cargo build --release --bin vertretungsbot

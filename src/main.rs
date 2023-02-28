@@ -1,6 +1,3 @@
-#![feature(map_try_insert)]
-
-
 mod commands;
 
 use std::collections::HashSet;

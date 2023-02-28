@@ -1,18 +1,22 @@
-FROM --platform=linux/amd64 lukemathwalker/cargo-chef:latest-rust-latest AS chef
+FROM clux/muslrust:stable AS chef
+RUN cargo install cargo-chef
 WORKDIR /vertretungsbot
 
 FROM chef AS planner
 COPY . .
 RUN cargo chef prepare --recipe-path recipe.json
 
-FROM chef AS builder 
+FROM chef AS builder
 COPY --from=planner /vertretungsbot/recipe.json recipe.json
+RUN apt update 
+RUN apt install gcc-arm-linux-gnueabihf -y
+RUN rustup target add armv7-unknown-linux-gnueabihf
 RUN rustup update nightly; rustup default nightly;
-RUN cargo chef cook --release --recipe-path recipe.json
+RUN cargo chef cook --release --target armv7-unknown-linux-gnueabihf --recipe-path recipe.json
 COPY . .
-RUN cargo build --release --bin vertretungsbot
+RUN cargo build --release --target armv7-unknown-linux-gnueabihf --bin vertretungsbot
 
-FROM --platform=linux/amd64 debian:stable-slim AS runtime
+FROM arm32v7/debian:latest AS runtime
 WORKDIR /vertretungsbot
 RUN apt-get update && \ 
     apt-get install ca-certificates -y && \

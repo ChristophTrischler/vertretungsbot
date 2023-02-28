@@ -11,14 +11,13 @@ COPY --from=planner /vertretungsbot/recipe.json recipe.json
 RUN apt update 
 RUN apt install gcc-arm-linux-gnueabihf -y
 RUN rustup target add armv7-unknown-linux-gnueabihf
-RUN rustup update nightly; rustup default nightly;
 RUN cargo chef cook --release --target armv7-unknown-linux-gnueabihf --recipe-path recipe.json
 COPY . .
 RUN cargo build --release --target armv7-unknown-linux-gnueabihf --bin vertretungsbot
 
-FROM arm32v7/debian:latest AS runtime
+FROM --platform=linux/arm32 arm32v7/debian:latest AS runtime
 WORKDIR /vertretungsbot
-RUN apt-get update && \ 
+RUN apt-get update && \
     apt-get install ca-certificates -y && \
     apt-get clean && \
     update-ca-certificates

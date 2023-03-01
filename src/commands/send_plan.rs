@@ -2,7 +2,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use std::collections::HashMap;
 
-use  serenity::model::id::UserId;
+use serenity::model::id::UserId;
 use serenity::framework::standard::macros::command;
 use serenity::framework::standard::{Args, CommandResult};
 use serenity::model::prelude::*;
@@ -206,7 +206,6 @@ pub async fn check_loop(arc_ctx: Arc<Context>){
                 for vday in &vdays {
                     let day = get_day(vday, &plan); 
 
-                    
 
                     if let Err(why) = user.direct_message(ctx,|m|{
                         if embed_activated {

@@ -120,7 +120,7 @@ pub fn get_day(VDay(day_str, v_lessons): &VDay, plan :&Plan)->Day{
 
     let date = NaiveDate::parse_from_str(date_str, "%d.%m.%Y").unwrap();
     let ref_date = NaiveDate::from_ymd_opt(2022, 8, 22).unwrap();
-    let week = date.signed_duration_since(ref_date).num_weeks() % 2;
+    let week = date.signed_duration_since(ref_date).num_weeks() % 2 + 1;
 
     let mut res_day:Day = Day::new(&day_str.as_str());
 

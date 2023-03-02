@@ -1,5 +1,8 @@
 FROM clux/muslrust:stable AS chef
 RUN cargo install cargo-chef
+RUN service ntp restart
+RUN rustup target add armv7-unknown-linux-musleabihf
+RUN apt-get update && apt-get -y install binutils-arm-linux-gnueabihf gcc-arm-linux-gnueabihf
 WORKDIR /vertretungsbot
 
 FROM chef AS planner
@@ -8,12 +11,10 @@ RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef AS builder
 COPY --from=planner /vertretungsbot/recipe.json recipe.json
-RUN apt update 
-RUN apt install gcc-arm-linux-gnueabihf -y
-RUN rustup target add armv7-unknown-linux-gnueabihf
-RUN cargo chef cook --release --target armv7-unknown-linux-gnueabihf --recipe-path recipe.json
+RUN rustup target add armv7-unknown-linux-musleabihf
+#RUN cargo chef cook --release --target armv7-unknown-linux-gnueabihf --recipe-path recipe.json
 COPY . .
-RUN cargo build --release --target armv7-unknown-linux-gnueabihf --bin vertretungsbot
+RUN cargo build --release --target armv7-unknown-linux-musleabihf --bin vertretungsbot
 
 FROM --platform=linux/arm32 arm32v7/debian:latest AS runtime
 WORKDIR /vertretungsbot

@@ -14,7 +14,7 @@ services:
 
 
   bot:
-    image: christophtrischler/vertretungsbot
+    image: christophtrischler/vertretungsbot:rpi
     working_dir: /vertretungsbot
     env_file:
       - .env

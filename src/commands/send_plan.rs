@@ -13,7 +13,7 @@ use sqlx::{Row};
 use chrono::{ Utc};
 
 
-use crate::commands::send_plan::vertretungsdings::{Plan, get_v_text, get_day, check_change, ChangeOption};
+use crate::commands::send_plan::vertretungsdings::{Plan, get_v_text, get_day, check_change, ChangeOption, VDay};
 
 mod vertretungsdings;
 
@@ -28,7 +28,7 @@ pub async fn send_plan(ctx: &Context, msg: &Message, mut _args: Args) -> Command
     let connection = {
         let data_read = ctx.data.read().await;
         data_read.get::<DBConnection>().unwrap().clone()
-    };
+    };  
     
 
     let opt_url = msg.attachments.first();
@@ -88,24 +88,30 @@ pub async fn update(ctx: &Context, msg: &Message, mut _args: Args) -> CommandRes
 
 
     let mut date = (Utc::now() - chrono::Duration::days(1)).naive_utc().date();
-    for i in 1..=3{
-        if let Some(vday) =  get_v_text(i, &mut date).await{
-            let day = get_day(&vday, &plan);
-            
-            if let Err(why) = msg.channel_id.send_message(ctx, |m| {
-                if embed_activated {
-                    day.to_embed(m);
-                    m
-                }
-                else {
-                    m.content(day.to_string())
-                }
-            }).await {
-                error!("Error sending Message: {:?}", why);
-            }
+    let mut vdays: Vec<VDay> = Vec::new();
+    for i in 1..=5{
+        match get_v_text(i, &mut date).await{
+            ChangeOption::Some(vday) => vdays.push(vday),
+            ChangeOption::Same => continue,
+            ChangeOption::None => break,
         }
-        else {
+        if vdays.len() >= 3 {
             break;
+        }
+    }
+    for vday in vdays{
+        let day = get_day(&vday, &plan);
+        
+        if let Err(why) = msg.channel_id.send_message(ctx, |m| {
+            if embed_activated {
+                day.to_embed(m);
+                m
+            }
+            else {
+                m.content(day.to_string())
+            }
+        }).await {
+            error!("Error sending Message: {:?}", why);
         }
     }
     Ok(())
@@ -165,7 +171,7 @@ pub async fn check_loop(arc_ctx: Arc<Context>){
     loop {
         let mut vdays = Vec::new();
         let mut date = (Utc::now() - chrono::Duration::days(1)).naive_utc().date();
-        for i in 1..=10{
+        for i in 1..=5{
             let last = if let Some(s) = times.get_mut(&i) {
                 s
             } else {
@@ -173,19 +179,20 @@ pub async fn check_loop(arc_ctx: Arc<Context>){
                 times.get_mut(&i).unwrap() 
             };
             
+            
             match check_change(i, last, &mut date).await{
                 ChangeOption::Some(vday) => vdays.push(vday),
                 ChangeOption::Same => continue,
                 ChangeOption::None => break,
             };
-
+            
             if vdays.len() >= 3 {
                 break;
             }
         }
 
 
-        if !vdays.is_empty(){
+        if vdays.is_empty(){
             continue;
         }
 

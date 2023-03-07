@@ -1,4 +1,3 @@
-
 use reqwest::{Client};
 use scraper::{Html, Selector};
 use serenity::builder::{CreateMessage, CreateEmbed};
@@ -7,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use chrono::naive::NaiveDate;
 use prettytable::*;
 
+#[derive(Debug)]
 pub enum ChangeOption<T> {
     Some(T),
     Same,
@@ -14,7 +14,7 @@ pub enum ChangeOption<T> {
 }
 
 
-pub async fn check_change(number: i64, last_time :&mut String, last_date: &mut NaiveDate)-> ChangeOption<VDay>{  
+pub async fn check_change(number: i64, last_time :&mut String, last_date: &mut NaiveDate) -> ChangeOption<VDay>{  
     let url = format!("https://geschuetzt.bszet.de/s-lk-vw/Vertretungsplaene/V_PlanBGy/V_DC_00{}.html",number);
     let c = Client::new();
     let res = c.get(url)
@@ -44,7 +44,7 @@ pub async fn check_change(number: i64, last_time :&mut String, last_date: &mut N
     return match get_vday(&text, last_date){
         Some(vday) => ChangeOption::Some(vday),
         None => ChangeOption::Same,
-    }
+    };
 
 }
 
@@ -59,7 +59,7 @@ fn is_in(string: &str, vec: &Vec<String>)->bool{
 }
 
 
-pub async fn get_v_text(number: i64, last_date: &mut NaiveDate) -> Option<VDay>{
+pub async fn get_v_text(number: i64, last_date: &mut NaiveDate) -> ChangeOption<VDay>{
     let url = format!("https://geschuetzt.bszet.de/s-lk-vw/Vertretungsplaene/V_PlanBGy/V_DC_00{}.html",number);
     let c = Client::new();
     let res = c.get(url)
@@ -68,9 +68,15 @@ pub async fn get_v_text(number: i64, last_date: &mut NaiveDate) -> Option<VDay>{
         .await
         .unwrap();
     if !res.status().is_success() {
-        return None;
+        return ChangeOption::None;
     }
-    return get_vday(&res.text().await.unwrap(), last_date);
+    let text = res.text()
+    .await
+    .unwrap();
+    return match get_vday(&text, last_date){
+        Some(vday)  => ChangeOption::Some(vday),
+        None => ChangeOption::Same
+    };
 }
 
 pub fn get_vday(text: &String,last_date: &mut NaiveDate) -> Option<VDay> {
@@ -262,7 +268,7 @@ impl Lesson {
     }
 }
 
-
+#[derive(Debug)]
 pub struct VDay(String, Vec<Lesson>);
 
 

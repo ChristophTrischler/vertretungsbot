@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: pass
       POSTGRES_DB: vertretungsdings
     volumes: 
-      - ./postgres-data:/var/lib/postgresql/data
+      - ./postgres-testdata:/var/lib/postgresql/data
       - ./sql/create_tables.sql:/docker-entrypoint-initdb.d/create_tables.sql
 
   bot:
@@ -18,7 +18,7 @@ services:
       dockerfile: Dockerfile
     working_dir: /vertretungsbot
     env_file:
-      - .env
+      - .envtest
 
   adminer:
     image: adminer

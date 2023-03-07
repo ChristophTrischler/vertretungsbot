@@ -1,4 +1,3 @@
-
 use reqwest::{Client};
 use scraper::{Html, Selector};
 use serenity::builder::{CreateMessage, CreateEmbed};
@@ -7,7 +6,15 @@ use serde::{Deserialize, Serialize};
 use chrono::naive::NaiveDate;
 use prettytable::*;
 
-pub async fn check_change(number: i64, last_time :&mut String)-> Option<VDay>{  
+#[derive(Debug)]
+pub enum ChangeOption<T> {
+    Some(T),
+    Same,
+    None
+}
+
+
+pub async fn check_change(number: i64, last_time :&mut String, last_date: &mut NaiveDate) -> ChangeOption<VDay>{  
     let url = format!("https://geschuetzt.bszet.de/s-lk-vw/Vertretungsplaene/V_PlanBGy/V_DC_00{}.html",number);
     let c = Client::new();
     let res = c.get(url)
@@ -16,7 +23,7 @@ pub async fn check_change(number: i64, last_time :&mut String)-> Option<VDay>{
         .await
         .unwrap();
     if !res.status().is_success() {
-        return None;
+        return ChangeOption::None;
     }
     let headers = res.headers();
     let this_time = headers.get("last-modified")
@@ -25,7 +32,7 @@ pub async fn check_change(number: i64, last_time :&mut String)-> Option<VDay>{
     .unwrap();
 
     if last_time.as_str().eq(this_time) {
-        return None;
+        return ChangeOption::Same;
     }
     else {
         *last_time = this_time.to_string();
@@ -33,7 +40,12 @@ pub async fn check_change(number: i64, last_time :&mut String)-> Option<VDay>{
     let text = res.text()
     .await
     .unwrap();
-    return Some(get_vday(&text));
+    
+    return match get_vday(&text, last_date){
+        Some(vday) => ChangeOption::Some(vday),
+        None => ChangeOption::Same,
+    };
+
 }
 
 
@@ -47,7 +59,7 @@ fn is_in(string: &str, vec: &Vec<String>)->bool{
 }
 
 
-pub async fn get_v_text(number: i64) -> Option<VDay>{
+pub async fn get_v_text(number: i64, last_date: &mut NaiveDate) -> ChangeOption<VDay>{
     let url = format!("https://geschuetzt.bszet.de/s-lk-vw/Vertretungsplaene/V_PlanBGy/V_DC_00{}.html",number);
     let c = Client::new();
     let res = c.get(url)
@@ -56,12 +68,18 @@ pub async fn get_v_text(number: i64) -> Option<VDay>{
         .await
         .unwrap();
     if !res.status().is_success() {
-        return None;
+        return ChangeOption::None;
     }
-    return Some(get_vday(&res.text().await.unwrap()));
+    let text = res.text()
+    .await
+    .unwrap();
+    return match get_vday(&text, last_date){
+        Some(vday)  => ChangeOption::Some(vday),
+        None => ChangeOption::Same
+    };
 }
 
-pub fn get_vday(text: &String) -> VDay {
+pub fn get_vday(text: &String,last_date: &mut NaiveDate) -> Option<VDay> {
     let doc = Html::parse_document(text);
 
     let date_selection = Selector::parse(r#"h1[class="list-table-caption"]"#).unwrap();
@@ -70,6 +88,16 @@ pub fn get_vday(text: &String) -> VDay {
     .inner_html()
     .trim()
     .to_string();
+
+    let date_str = date.split_whitespace().last().unwrap();
+    let this_date = NaiveDate::parse_from_str(date_str, "%d.%m.%Y").unwrap();
+    
+    if this_date <= *last_date{
+        return None;
+    } 
+    else {
+        *last_date = this_date;
+    }
 
     let table_body_selection = Selector::parse("tbody").unwrap();
     let table_row_selection = Selector::parse("tr").unwrap();
@@ -109,7 +137,7 @@ pub fn get_vday(text: &String) -> VDay {
         });
     }
 
-    return VDay(date, v_lessons.into());
+    return Some(VDay(date, v_lessons.into()));
 }
 
 
@@ -120,7 +148,7 @@ pub fn get_day(VDay(day_str, v_lessons): &VDay, plan :&Plan)->Day{
 
     let date = NaiveDate::parse_from_str(date_str, "%d.%m.%Y").unwrap();
     let ref_date = NaiveDate::from_ymd_opt(2022, 8, 22).unwrap();
-    let week = date.signed_duration_since(ref_date).num_weeks() % 2;
+    let week = date.signed_duration_since(ref_date).num_weeks() % 2 + 1;
 
     let mut res_day:Day = Day::new(&day_str.as_str());
 
@@ -240,7 +268,7 @@ impl Lesson {
     }
 }
 
-
+#[derive(Debug)]
 pub struct VDay(String, Vec<Lesson>);
 
 

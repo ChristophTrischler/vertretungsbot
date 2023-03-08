@@ -289,7 +289,7 @@ impl Day {
     pub fn to_table(&self) -> Table{
         let mut table = Table::new();
         table.set_titles(row!["Stunde","Fach", "Raum","Lehrer","Type","Mitteilung"]);
-        self.lessons.iter()
+        self.lessons.iter() 
         .filter(|item| item.len()>0)
         .for_each(|lesson| 
             for l in lesson{

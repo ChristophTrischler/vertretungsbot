@@ -1,4 +1,5 @@
 mod commands;
+mod vertretung;
 
 use std::collections::HashSet;
 use std::env;
@@ -16,6 +17,9 @@ use tracing::{error, info};
 use sqlx::{postgres::{PgPool,PgPoolOptions, PgConnectOptions}};
 
 use crate::commands::send_plan::*;
+use crate::commands::update::*;
+use crate::commands::setter::*;
+use crate::commands::checker::check_loop;
 pub struct ShardManagerContainer;
 
 impl TypeMapKey for ShardManagerContainer {

@@ -20,6 +20,7 @@ use crate::commands::send_plan::*;
 use crate::commands::update::*;
 use crate::commands::setter::*;
 use crate::commands::checker::check_loop;
+use crate::commands::getter::*;
 pub struct ShardManagerContainer;
 
 impl TypeMapKey for ShardManagerContainer {
@@ -50,7 +51,7 @@ impl EventHandler for Handler {
 }
 
 #[group]
-#[commands(send_plan, update, set, embed)]
+#[commands(send_plan, update, set, embed, get_example, help)]
 struct General;
 
 

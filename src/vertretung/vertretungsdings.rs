@@ -208,18 +208,6 @@ impl PlanLesson {
     }
 }
 
-
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub enum WeekOption {
-    #[default]
-    None,
-    AandB(PlanLesson),
-    A(PlanLesson),
-    B(PlanLesson),
-    AorB(PlanLesson, PlanLesson),
-}
-
- 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Lesson {
     pub class: String,
@@ -268,9 +256,31 @@ impl Lesson {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Plan {
+    pub class_name: String,
+    pub days: Vec<PlanDay>,
+    pub subjects: Vec<String>
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub enum WeekOption {
+    #[default]
+    None,
+    AandB(PlanLesson),
+    A(PlanLesson),
+    B(PlanLesson),
+    AorB(PlanLesson, PlanLesson),
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct PlanDay{
+    pub day: String, 
+    pub lessons: [WeekOption; 5]
+} 
+
 #[derive(Debug)]
 pub struct VDay(String, Vec<Lesson>);
-
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Day {  
@@ -311,17 +321,4 @@ impl Day {
     pub fn to_string(&self) -> String{
         format!{"```{}\n{}```",self.day, self.to_table().to_string()}
     }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
-pub struct PlanDay{
-    pub day: String, 
-    pub lessons: [WeekOption; 5]
-} 
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Plan {
-    pub class_name: String,
-    pub days: Vec<PlanDay>,
-    pub subjects: Vec<String>
 }

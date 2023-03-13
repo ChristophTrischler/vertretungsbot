@@ -42,5 +42,9 @@ async fn help(ctx: &Context, msg: &Message, mut _args: Args)->CommandResult{
     set <- bool 
     embed <- bool 
     ";
+
+    if let Err(why) = msg.channel_id.say(ctx, res).await{
+        error!(why);
+    }
     Ok(())
 }

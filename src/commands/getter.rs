@@ -31,5 +31,16 @@ async fn get_example(ctx: &Context, msg: &Message, mut _args: Args)->CommandResu
 
 #[command]
 async fn help(ctx: &Context, msg: &Message, mut _args: Args)->CommandResult{
+    let res = "prefix: ! \ncommands:
+    help
+    get_example->example_plan.json
+
+    update 
+
+    send_plan<-plan.json
+
+    set <- bool 
+    embed <- bool 
+    ";
     Ok(())
 }

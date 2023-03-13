@@ -34,17 +34,13 @@ async fn help(ctx: &Context, msg: &Message, mut _args: Args)->CommandResult{
     let res = "prefix: ! \ncommands:
     help
     get_example->example_plan.json
-
     update 
-
     send_plan<-plan.json
-
     set <- bool 
-    embed <- bool 
-    ";
+    embed <- bool ";
 
     if let Err(why) = msg.channel_id.say(ctx, res).await{
-        error!(why);
+        error!("failed help: {why}" );
     }
     Ok(())
 }
